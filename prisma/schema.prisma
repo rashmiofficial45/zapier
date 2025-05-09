@@ -25,6 +25,7 @@ model Zap {
   id      String   @id @default(uuid())
   trigger Trigger?
   actions Action[]
+  zapRun  ZapRun[]
 }
 
 model Trigger {
@@ -54,4 +55,10 @@ model AvailableAction {
   id     String   @id @default(uuid())
   name   String   @unique
   action Action[]
+}
+
+model ZapRun {
+  id String @id @default(uuid())
+  zapId String
+  zap Zap @relation(fields: [zapId], references: [id])
 }

@@ -17,45 +17,41 @@ const prisma_1 = require("../prisma/generated/prisma");
 const prisma = new prisma_1.PrismaClient();
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
-// https://hooks.zapier.com/hooks/catch/17043103/22b8496/ (this is the sample zapier webhook that we wanna build)
 app.post("/hooks/catch/:userId/:zapId", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log("Accessing to the webhook");
-    const userId = req.params.userId;
-    const zapId = req.params.zapId;
+    console.log("Webhook hit");
+    const { userId, zapId } = req.params;
     const body = req.body;
-    // store in DB a new trigger happened
-    const response = yield prisma.$transaction((tx) => __awaiter(void 0, void 0, void 0, function* () {
-        const run = yield prisma.zapRun.create({
-            data: {
-                zapId,
-                metadata: body
-            },
+    const validMetadata = typeof body === "object" && body !== null ? body : {};
+    try {
+        const response = yield prisma.$transaction((tx) => __awaiter(void 0, void 0, void 0, function* () {
+            const run = yield prisma.zapRun.create({
+                data: {
+                    zapId,
+                    metadata: validMetadata, // assuming body is JSON serializable
+                },
+            });
+            const outbox = yield prisma.zapRunOutbox.create({
+                data: {
+                    zapRunId: run.id,
+                },
+            });
+            return { run, outbox };
+        }));
+        res.json({
+            message: "Webhook received",
+            zapRun: response.run,
+            zapRunOutbox: response.outbox,
         });
-        const outbox = yield prisma.zapRunOutbox.create({
-            data: {
-                zapRunId: run.id,
-            },
-        });
-        return { run, outbox };
-    }));
-    res.json({
-        "message": "webhook recieved",
-        "zapRun": response.run,
-        "zapRunOutbox": response.outbox
-    });
-    /**
-   * Explanation :
-      You pass a callback to $transaction if you want to use await/async logic.
-      The tx parameter is a transactional Prisma client.
-      Both operations are guaranteed to either complete or roll back together.
-   */
-    // push it to a queue ( kafka or redis )
-    res.send("heyyy");
+        // TODO: Push to queue (Kafka, Redis, etc.)
+    }
+    catch (err) {
+        console.error("Error handling webhook:", err);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
 }));
 app.get("/", (req, res) => {
-    console.log("Hello User");
-    res.send("heyyy");
+    res.send("Server is running");
 });
 app.listen(3000, () => {
-    console.log("The server is listening in port http://localhost:3000");
+    console.log("Server is listening on http://localhost:3000");
 });

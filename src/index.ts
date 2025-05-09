@@ -2,25 +2,25 @@ import express from "express";
 import { PrismaClient } from "../prisma/generated/prisma";
 const prisma = new PrismaClient();
 const app = express();
-
+app.use(express.json())
 // https://hooks.zapier.com/hooks/catch/17043103/22b8496/ (this is the sample zapier webhook that we wanna build)
 
 app.post("/hooks/catch/:userId/:zapId", async (req, res) => {
   console.log("Accessing to the webhook");
   const userId = req.params.userId;
   const zapId = req.params.zapId;
-  const metadata = req.body
+  const body = req.body
 
   // store in DB a new trigger happened
   const response = await prisma.$transaction(async (tx) => {
-    const run = await tx.zapRun.create({
+    const run = await prisma.zapRun.create({
       data: {
         zapId,
-        metadata
+        metadata:body
       },
     });
 
-    const outbox = await tx.zapRunOutbox.create({
+    const outbox = await prisma.zapRunOutbox.create({
       data: {
         zapRunId: run.id,
       },
@@ -28,7 +28,11 @@ app.post("/hooks/catch/:userId/:zapId", async (req, res) => {
 
     return { run, outbox };
   });
-
+  res.json({
+    "message":"webhook recieved",
+    "zapRun":response.run,
+    "zapRunOutbox":response.outbox
+  })
   /**
  * Explanation :
     You pass a callback to $transaction if you want to use await/async logic.

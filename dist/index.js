@@ -13,30 +13,36 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const prisma_1 = require("./generated/prisma");
+const prisma_1 = require("../prisma/generated/prisma");
 const prisma = new prisma_1.PrismaClient();
 const app = (0, express_1.default)();
+app.use(express_1.default.json());
 // https://hooks.zapier.com/hooks/catch/17043103/22b8496/ (this is the sample zapier webhook that we wanna build)
 app.post("/hooks/catch/:userId/:zapId", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     console.log("Accessing to the webhook");
     const userId = req.params.userId;
     const zapId = req.params.zapId;
-    const metadata = req.body;
+    const body = req.body;
     // store in DB a new trigger happened
     const response = yield prisma.$transaction((tx) => __awaiter(void 0, void 0, void 0, function* () {
-        const run = yield tx.zapRun.create({
+        const run = yield prisma.zapRun.create({
             data: {
                 zapId,
-                metadata
+                metadata: body
             },
         });
-        const outbox = yield tx.zapRunOutbox.create({
+        const outbox = yield prisma.zapRunOutbox.create({
             data: {
                 zapRunId: run.id,
             },
         });
         return { run, outbox };
     }));
+    res.json({
+        "message": "webhook recieved",
+        "zapRun": response.run,
+        "zapRunOutbox": response.outbox
+    });
     /**
    * Explanation :
       You pass a callback to $transaction if you want to use await/async logic.

@@ -6,7 +6,7 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "./generated/prisma"
+  output   = "../generated" // cleaner: outputs to /prisma/generated
 }
 
 datasource db {
@@ -60,7 +60,7 @@ model AvailableAction {
 model ZapRun {
   id           String        @id @default(uuid())
   zapId        String
-  metadata     Json
+  metadata     Json?
   zap          Zap           @relation(fields: [zapId], references: [id])
   zapRunOutbox ZapRunOutbox?
 }

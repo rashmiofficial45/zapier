@@ -1,5 +1,5 @@
+import { PrismaClient } from "../prisma/generated/prisma/client";
 import express from "express";
-import { PrismaClient } from "../prisma/generated/prisma";
 
 const prisma = new PrismaClient();
 const app = express();
@@ -36,6 +36,7 @@ app.post("/hooks/catch/:userId/:zapId", async (req, res) => {
     });
 
     // TODO: Push to queue (Kafka, Redis, etc.)
+
   } catch (err) {
     console.error("Error handling webhook:", err);
     res.status(500).json({ error: "Internal Server Error" });

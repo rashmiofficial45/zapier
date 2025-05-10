@@ -6,7 +6,7 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated" // cleaner: outputs to /prisma/generated
+  output = "./generated/prisma/client"
 }
 
 datasource db {
@@ -43,12 +43,13 @@ model AvailableTrigger {
 }
 
 model Action {
-  id       String          @id @default(uuid())
-  action   String
-  zap      Zap             @relation(fields: [zapId], references: [id])
-  zapId    String
-  type     AvailableAction @relation(fields: [actionId], references: [id])
-  actionId String
+  id           String          @id @default(uuid())
+  action       String
+  sortingOrder Int             @default(0)
+  zap          Zap             @relation(fields: [zapId], references: [id])
+  zapId        String
+  type         AvailableAction @relation(fields: [actionId], references: [id])
+  actionId     String
 }
 
 model AvailableAction {

@@ -13,14 +13,14 @@ app.post("/hooks/catch/:userId/:zapId", async (req, res) => {
 
   try {
     const response = await prisma.$transaction(async (tx) => {
-      const run = await prisma.zapRun.create({
+      const run = await tx.zapRun.create({
         data: {
           zapId,
           metadata: validMetadata, // assuming body is JSON serializable
         },
       });
 
-      const outbox = await prisma.zapRunOutbox.create({
+      const outbox = await tx.zapRunOutbox.create({
         data: {
           zapRunId: run.id,
         },

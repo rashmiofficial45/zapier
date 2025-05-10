@@ -24,13 +24,13 @@ app.post("/hooks/catch/:userId/:zapId", (req, res) => __awaiter(void 0, void 0, 
     const validMetadata = typeof body === "object" && body !== null ? body : {};
     try {
         const response = yield prisma.$transaction((tx) => __awaiter(void 0, void 0, void 0, function* () {
-            const run = yield prisma.zapRun.create({
+            const run = yield tx.zapRun.create({
                 data: {
                     zapId,
                     metadata: validMetadata, // assuming body is JSON serializable
                 },
             });
-            const outbox = yield prisma.zapRunOutbox.create({
+            const outbox = yield tx.zapRunOutbox.create({
                 data: {
                     zapRunId: run.id,
                 },
